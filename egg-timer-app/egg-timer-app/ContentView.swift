@@ -21,55 +21,57 @@ struct ContentView: View {
     let eggTimes = ["Soft": 3, "Medium": 5, "Hard": 8] // Time in seconds
     
     var body: some View {
-        VStack(alignment: .center) {
-            Text("🥚 Egg Timer")
-                .font(.largeTitle)
-                .foregroundColor(Color.primary)
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .center)
-            
-            HStack(spacing: 20) {
-                ForEach(eggTimes.keys.sorted(), id: \..self) { egg in
-                    Button(action: {
-                        startTimer(for: eggTimes[egg]!)
-                    }) {
-                        Text(egg)
-                            .font(.headline)
-                            .padding()
-                            .background(Color(UIColor.secondarySystemBackground))
-                            .foregroundColor(Color.primary)
-                            .cornerRadius(8)
-                            .shadow(radius: 3)
+        ZStack {
+            VStack(alignment: .center) {
+                Text("🥚 Egg Timer")
+                    .font(.largeTitle)
+                    .foregroundColor(Color.primary)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .center)
+                
+                HStack(spacing: 20) {
+                    ForEach(eggTimes.keys.sorted(), id: \..self) { egg in
+                        Button(action: {
+                            startTimer(for: eggTimes[egg]!)
+                        }) {
+                            Text(egg)
+                                .font(.headline)
+                                .padding()
+                                .background(Color(UIColor.secondarySystemBackground))
+                                .foregroundColor(Color.primary)
+                                .cornerRadius(8)
+                                .shadow(radius: 3)
+                        }
+                        .buttonStyle(ScaleButtonStyle())
                     }
-                    .buttonStyle(ScaleButtonStyle())
+                }
+                .padding()
+                
+                Spacer()
+                
+            Text(eggReady ? "🥚" : "⏲️")
+                    .font(.system(size: 100))
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding()
+                    .foregroundColor(Color.primary)
+                    .scaleEffect(eggReady ? 1.2 : 1.0)
+                    .rotationEffect(.degrees(eggReady ? 360 : 0))
+                    .animation(.easeInOut(duration: 0.8), value: eggReady)
+                
+                if hasStarted && !eggReady {
+                    ProgressView(value: Double(timeRemaining), total: Double(totalTime))
+                        .padding()
+                    
+                    Text("\(timeRemaining) seconds left")
+                        .font(.headline)
+                        .foregroundColor(Color.primary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding()
                 }
             }
             .padding()
-            
-            Spacer()
-            
-            Text(eggReady ? "🥚" : "⏲️")
-                .font(.system(size: 100))
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding()
-                .foregroundColor(Color.primary)
-                .scaleEffect(eggReady ? 1.2 : 1.0)
-                .rotationEffect(.degrees(eggReady ? 360 : 0))
-                .animation(.easeInOut(duration: 0.8), value: eggReady)
-            
-            if hasStarted && !eggReady {
-                ProgressView(value: Double(timeRemaining), total: Double(totalTime))
-                    .padding()
-                
-                Text("\(timeRemaining) seconds left")
-                    .font(.headline)
-                    .foregroundColor(Color.primary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
-            }
+            .background(Color(UIColor.systemBackground).ignoresSafeArea())
         }
-        .padding()
-        .background(Color(UIColor.systemBackground).ignoresSafeArea())
     }
     
     func startTimer(for seconds: Int) {
@@ -98,6 +100,9 @@ struct ContentView: View {
         do {
             player = try AVAudioPlayer(contentsOf: url)
             player?.play()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                player?.stop()
+            }
         } catch {
             print("Error playing sound: \(error.localizedDescription)")
         }
