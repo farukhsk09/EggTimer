@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct ContentView: View {
     @State private var timeRemaining = 0
@@ -14,6 +15,8 @@ struct ContentView: View {
     @State private var timer: Timer?
     @State private var eggReady = false
     @State private var hasStarted = false
+    @State private var showBrokenEgg = false
+    @State private var player: AVAudioPlayer?
     
     let eggTimes = ["Soft": 3, "Medium": 5, "Hard": 8] // Time in seconds
     
@@ -45,11 +48,14 @@ struct ContentView: View {
             
             Spacer()
             
-            Text(eggReady ? "🥚➡️🍳" : "🥚")
+            Text(eggReady ? "🥚" : "⏲️")
                 .font(.system(size: 100))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding()
                 .foregroundColor(Color.primary)
+                .scaleEffect(eggReady ? 1.2 : 1.0)
+                .rotationEffect(.degrees(eggReady ? 360 : 0))
+                .animation(.easeInOut(duration: 0.8), value: eggReady)
             
             if hasStarted && !eggReady {
                 ProgressView(value: Double(timeRemaining), total: Double(totalTime))
@@ -73,6 +79,7 @@ struct ContentView: View {
         timerRunning = true
         eggReady = false
         hasStarted = true
+        showBrokenEgg = false
         
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             if timeRemaining > 0 {
@@ -81,7 +88,18 @@ struct ContentView: View {
                 timer?.invalidate()
                 timerRunning = false
                 eggReady = true
+                playSound()
             }
+        }
+    }
+    
+    func playSound() {
+        guard let url = Bundle.main.url(forResource: "ding", withExtension: "mp3") else { return }
+        do {
+            player = try AVAudioPlayer(contentsOf: url)
+            player?.play()
+        } catch {
+            print("Error playing sound: \(error.localizedDescription)")
         }
     }
 }
